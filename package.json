@@ -1,0 +1,39 @@
+{
+  "name": "feriados-api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "API publica de feriados nacionales del Perú.",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/src/index.js",
+    "dev": "tsx watch src/index.ts",
+    "lint": "eslint .",
+    "test": "node --import tsx --test test/**/*.test.ts",
+    "test:integration": "node --import tsx --test test/integration/**/*.test.ts",
+    "test:unit": "node --import tsx --test test/unit/**/*.test.ts"
+  },
+  "dependencies": {
+    "@fastify/helmet": "^13.0.0",
+    "@fastify/rate-limit": "^10.3.0",
+    "@fastify/swagger": "^9.5.1",
+    "@fastify/swagger-ui": "^5.2.1",
+    "dotenv": "^16.4.7",
+    "fastify": "^5.2.1",
+    "pg": "^8.13.1",
+    "pino": "^9.5.0",
+    "redis": "^4.7.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/pg": "^8.11.11",
+    "@eslint/js": "^9.22.0",
+    "eslint": "^9.22.0",
+    "globals": "^16.0.0",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2"
+  }
+}
