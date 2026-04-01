@@ -26,7 +26,7 @@ Servicio Fastify público para consultar feriados nacionales del Perú usando Re
 - intenta leer desde Redis
 - si Redis falla o no tiene la clave, cae a PostgreSQL
 - la respuesta deja rastro del origen en `meta.source`
-- el dataset activo refleja el anio disponible en el snapshot vigente de `gob.pe`
+- el dataset activo refleja el año disponible en el snapshot vigente de `gob.pe`
 
 ## Características operativas
 
@@ -37,12 +37,12 @@ Servicio Fastify público para consultar feriados nacionales del Perú usando Re
 - logging con Pino y redaction de headers sensibles
 - `/metrics` con contadores de requests, errores, caché y latencia por ruta
 - traza de consultas en PostgreSQL con IP, `user-agent`, headers de navegador y timestamp
-- validacion estricta de fechas para evitar `YYYY-MM-DD` invalidos semanticos
-- `/status` y `/metrics` pueden protegerse con token o allowlist de IP en produccion
+- validación estricta de fechas para evitar `YYYY-MM-DD` inválidos semánticos
+- `/status` y `/metrics` pueden protegerse con token o allowlist de IP en producción
 
 ## Variables de entorno
 
-Tomadas de [`.env.example`](/media/work/OneDrive/Personal-Git/feriados-api/feriados-api/.env.example):
+Tomadas de [`.env.example`](.env.example):
 
 - `PORT`
 - `HOST`
@@ -111,5 +111,5 @@ Servicio operativo, con contrato OpenAPI y fallback Redis -> PostgreSQL ya valid
 
 Nota de modelo actual:
 
-- el snapshot activo representa el anio vigente publicado por `gob.pe`
-- no existe historico multi-anio servido por el API en esta version
+- el snapshot activo representa el año vigente publicado por `gob.pe`
+- no existe histórico multi-año servido por el API en esta version
