@@ -48,6 +48,27 @@ test('serves the date validation endpoint', async () => {
   await app.close();
 });
 
+test('renders the landing page with the current and next holiday summary', async () => {
+  const app = await buildApp({
+    ...baseAppOptions,
+    holidayService: createHolidayService({
+      defaultSource: 'memory',
+      nowProvider: () => new Date('2026-04-02T15:00:00.000Z')
+    })
+  });
+
+  const response = await app.inject({
+    method: 'GET',
+    url: '/'
+  });
+
+  assert.equal(response.statusCode, 200);
+  assert.match(response.body, /Hoy es feriado por Semana Santa/);
+  assert.match(response.body, /El próximo feriado es viernes, 3 de abril por Semana Santa\./i);
+
+  await app.close();
+});
+
 test('validates malformed dates', async () => {
   const app = await buildApp({
     ...baseAppOptions,

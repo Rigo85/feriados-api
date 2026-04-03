@@ -82,6 +82,18 @@ export interface HolidayListResponse {
   };
 }
 
+export interface LandingSummary {
+  today: {
+    date: string;
+    is_holiday: boolean;
+    holiday: {
+      name: string;
+      scope: string;
+    } | null;
+  };
+  next_holiday: HolidayRecord | null;
+}
+
 export interface ReadinessChecks {
   postgres: 'ok' | 'error' | 'disabled' | 'unknown';
   redis: 'ok' | 'error' | 'disabled' | 'unknown';

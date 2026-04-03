@@ -111,3 +111,28 @@ test('returns redis as source when a cached response is reused', async () => {
   assert.equal(result.data.is_holiday, false);
   assert.equal(cacheHits, 1);
 });
+
+test('builds a landing summary when today is a holiday', async () => {
+  const summary = await createHolidayService({
+    defaultSource: 'memory',
+    nowProvider: () => new Date('2026-04-02T15:00:00.000Z')
+  }).getLandingSummary();
+
+  assert.equal(summary.today.date, '2026-04-02');
+  assert.equal(summary.today.is_holiday, true);
+  assert.equal(summary.today.holiday?.name, 'Semana Santa');
+  assert.equal(summary.next_holiday?.date, '2026-04-03');
+});
+
+test('builds a landing summary with the next upcoming holiday when today is not a holiday', async () => {
+  const summary = await createHolidayService({
+    defaultSource: 'memory',
+    nowProvider: () => new Date('2026-04-04T15:00:00.000Z')
+  }).getLandingSummary();
+
+  assert.equal(summary.today.date, '2026-04-04');
+  assert.equal(summary.today.is_holiday, false);
+  assert.equal(summary.today.holiday, null);
+  assert.equal(summary.next_holiday?.date, '2026-05-01');
+  assert.equal(summary.next_holiday?.name, 'Día del Trabajo');
+});

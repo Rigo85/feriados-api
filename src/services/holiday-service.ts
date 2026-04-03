@@ -2,6 +2,7 @@ import type {
   CacheRepository,
   DateResponse,
   HolidayListResponse,
+  LandingSummary,
   HolidayRecord,
   HolidayRepository,
   MetaResponse,
@@ -24,6 +25,7 @@ interface HolidayServiceDependencies {
   holidayRepository?: HolidayRepository | null;
   cacheRepository?: CacheRepository | null;
   defaultSource?: string;
+  nowProvider?: () => Date;
   onCacheHit?: () => void;
   onCacheMiss?: () => void;
   onCacheWrite?: () => void;
@@ -31,6 +33,25 @@ interface HolidayServiceDependencies {
 }
 
 export function createHolidayService(dependencies: HolidayServiceDependencies) {
+  function getDateInLima(date: Date): string {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Lima',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).formatToParts(date);
+
+    const year = parts.find((part) => part.type === 'year')?.value;
+    const month = parts.find((part) => part.type === 'month')?.value;
+    const day = parts.find((part) => part.type === 'day')?.value;
+
+    if (!year || !month || !day) {
+      throw new Error('Unable to compute Lima calendar date');
+    }
+
+    return `${year}-${month}-${day}`;
+  }
+
   async function getMetaFromRepository(): Promise<SnapshotMeta> {
     if (!dependencies.holidayRepository) {
       return FALLBACK_META;
@@ -166,6 +187,28 @@ export function createHolidayService(dependencies: HolidayServiceDependencies) {
     });
   }
 
+  async function getLandingSummary(): Promise<LandingSummary> {
+    const holidays = (await getAll()).data;
+    const now = dependencies.nowProvider ? dependencies.nowProvider() : new Date();
+    const today = getDateInLima(now);
+    const todayHoliday = holidays.find((holiday) => holiday.date === today) || null;
+    const nextHoliday = holidays.find((holiday) => holiday.date > today) || null;
+
+    return {
+      today: {
+        date: today,
+        is_holiday: Boolean(todayHoliday),
+        holiday: todayHoliday
+          ? {
+              name: todayHoliday.name,
+              scope: todayHoliday.scope
+            }
+          : null
+      },
+      next_holiday: nextHoliday
+    };
+  }
+
   async function getReadiness(): Promise<ReadinessChecks> {
     const checks: ReadinessChecks = {
       postgres: dependencies.holidayRepository ? 'unknown' : 'disabled',
@@ -212,6 +255,7 @@ export function createHolidayService(dependencies: HolidayServiceDependencies) {
     getAll,
     getByYear,
     getByDate,
+    getLandingSummary,
     getMeta,
     getReadiness,
     getStatusSummary

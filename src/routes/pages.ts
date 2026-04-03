@@ -1,6 +1,73 @@
 import type { FastifyInstance, FastifyReply } from 'fastify';
+import type { LandingSummary } from '../types';
 
-function renderLandingPage(): string {
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+function formatSpanishDate(date: string): string {
+  const parts = date.split('-');
+  if (parts.length !== 3) {
+    return date;
+  }
+
+  const [yearPart, monthPart, dayPart] = parts;
+  const year = Number(yearPart);
+  const month = Number(monthPart);
+  const day = Number(dayPart);
+
+  if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) {
+    return date;
+  }
+
+  const formatter = new Intl.DateTimeFormat('es-PE', {
+    timeZone: 'America/Lima',
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long'
+  });
+
+  return formatter.format(new Date(Date.UTC(year, month - 1, day, 12)));
+}
+
+function renderHolidayPulse(summary: LandingSummary): string {
+  if (summary.today.is_holiday && summary.today.holiday && summary.next_holiday) {
+    return `
+      <p class="pulse-kicker">Panorama de hoy</p>
+      <h2>Hoy es feriado por ${escapeHtml(summary.today.holiday.name)}</h2>
+      <p>El próximo feriado es ${escapeHtml(formatSpanishDate(summary.next_holiday.date))} por ${escapeHtml(summary.next_holiday.name)}.</p>
+    `;
+  }
+
+  if (summary.today.is_holiday && summary.today.holiday) {
+    return `
+      <p class="pulse-kicker">Panorama de hoy</p>
+      <h2>Hoy es feriado por ${escapeHtml(summary.today.holiday.name)}</h2>
+      <p>No hay otro feriado cargado después de hoy en el dataset actual.</p>
+    `;
+  }
+
+  if (summary.next_holiday) {
+    return `
+      <p class="pulse-kicker">Próximo feriado</p>
+      <h2>${escapeHtml(formatSpanishDate(summary.next_holiday.date))}</h2>
+      <p>Corresponde a ${escapeHtml(summary.next_holiday.name)}.</p>
+    `;
+  }
+
+  return `
+    <p class="pulse-kicker">Próximo feriado</p>
+    <h2>Sin feriados cargados</h2>
+    <p>No hay datos disponibles para calcular el próximo feriado.</p>
+  `;
+}
+
+function renderLandingPage(summary: LandingSummary): string {
   return `<!DOCTYPE html>
 <html lang="es">
   <head>
@@ -70,6 +137,21 @@ function renderLandingPage(): string {
       .panel {
         padding: 24px;
       }
+      .pulse {
+        margin-bottom: 24px;
+      }
+      .pulse h2 {
+        margin: 0 0 10px;
+        font-size: clamp(1.7rem, 4vw, 2.5rem);
+        line-height: 1.05;
+      }
+      .pulse-kicker {
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-size: 0.78rem;
+        color: var(--accent);
+        margin: 0 0 10px;
+      }
       form {
         display: grid;
         gap: 12px;
@@ -103,6 +185,9 @@ function renderLandingPage(): string {
           <a class="secondary" href="/v1/holidays">JSON</a>
         </div>
       </section>
+      <section class="panel pulse">
+        ${renderHolidayPulse(summary)}
+      </section>
       <section class="panel">
         <h2>Validar fecha</h2>
         <form id="holiday-form">
@@ -133,7 +218,8 @@ function renderLandingPage(): string {
 
 export default async function pageRoutes(app: FastifyInstance): Promise<void> {
   app.get('/', async (_request, reply: FastifyReply) => {
-    reply.type('text/html').send(renderLandingPage());
+    const summary = await app.holidayService.getLandingSummary();
+    reply.type('text/html').send(renderLandingPage(summary));
   });
 
   app.get('/status', {
