@@ -24,13 +24,19 @@ export function createHolidayRepository(pool: Pool | null): HolidayRepository | 
   async function getCurrentMeta(): Promise<CurrentMetaRow> {
     const result = await db.query<CurrentMetaRow>(`
       SELECT
-        id AS snapshot_id,
-        fetched_at AS updated_at,
-        record_count,
-        source_url,
-        parser_version
-      FROM holiday_snapshots
-      WHERE is_current = TRUE
+        snapshots.id AS snapshot_id,
+        snapshots.fetched_at AS updated_at,
+        COALESCE(current_projection.record_count, 0) AS record_count,
+        snapshots.source_url,
+        snapshots.parser_version
+      FROM holiday_snapshots AS snapshots
+      LEFT JOIN (
+        SELECT snapshot_id, COUNT(*)::integer AS record_count
+        FROM holidays_current
+        GROUP BY snapshot_id
+      ) AS current_projection
+        ON current_projection.snapshot_id = snapshots.id
+      WHERE snapshots.is_current = TRUE
       LIMIT 1
     `);
 

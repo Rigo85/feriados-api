@@ -26,7 +26,8 @@ Servicio Fastify público para consultar feriados nacionales del Perú usando Re
 - intenta leer desde Redis
 - si Redis falla o no tiene la clave, cae a PostgreSQL
 - la respuesta deja rastro del origen en `meta.source`
-- el dataset activo refleja el año disponible en el snapshot vigente de `gob.pe`
+- el dataset activo refleja una proyección reconciliada entre `gob.pe` y el baseline anual sembrado
+- `record_count` y `total_holidays` describen la proyección actual servida por el API, no solo el conteo observado en el último scrape
 
 ## Características operativas
 
@@ -111,5 +112,6 @@ Servicio operativo, con contrato OpenAPI y fallback Redis -> PostgreSQL ya valid
 
 Nota de modelo actual:
 
-- el snapshot activo representa el año vigente publicado por `gob.pe`
+- `gob.pe` se trata como fuente operativa parcial de presente y futuros
+- el productor mantiene una proyección reconciliada para no perder feriados pasados del año vigente
 - no existe histórico multi-año servido por el API en esta version
